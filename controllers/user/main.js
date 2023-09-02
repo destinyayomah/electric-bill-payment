@@ -5,7 +5,7 @@ dotenv.config();
 
 export const showAUser = async (req, res) => {
     try {
-        const { authorization } = req.headers;
+        const { authorization } = req.headers;npm 
 
         if (!authorization) { res.status(404).send({ message: 'unauthorized' }); return false; }
 
