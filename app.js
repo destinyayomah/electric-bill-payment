@@ -2,6 +2,8 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import userRouter from './routes/user/main.js';
+import registerRoute from './routes/register/main.js';
+import loginRouter from './routes/login/main.js';
 import cors from 'cors';
 
 import mongoose from './utils/connectDb.js';
@@ -16,6 +18,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors({ origin: "*" }));
 
 app.use('/user', userRouter);
+app.use('/login', loginRouter);
+app.use('/register', registerRoute);
 
 app.get('/', (req, res) => {
     res.send({ message: "Welcome to the Electric Bill Payment API" });

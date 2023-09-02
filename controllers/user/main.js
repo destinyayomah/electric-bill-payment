@@ -1,26 +1,13 @@
-import User, { userSchema } from "../../models/user/main.js";
-import bcrypt from 'bcrypt';
+import User from "../../models/user/main.js";
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
 
-export const validateUser = (req, res) => {
-    try {
-        User.findOne({ _id: req.params.uid }, (err, user) => {
-            if (!user) { res.status(404).send({ message: "User not found" }); return false; }
-
-            res.status(200).send({ message: "User found" });
-        });
-    } catch (e) {
-        res.status(404).send({ error: e.message });
-    }
-}
-
-export const showAUserByToken = async (req, res) => {
+export const showAUser = async (req, res) => {
     try {
         const { authorization } = req.headers;
 
-        if (!authorization) { res.status(404).send({ message: 'token required' }); return false; }
+        if (!authorization) { res.status(404).send({ message: 'unauthorized' }); return false; }
 
         if (!authorization.includes('Bearer ')) { res.status(404).send({ message: 'invalid token' }); return false; }
 
@@ -28,26 +15,31 @@ export const showAUserByToken = async (req, res) => {
 
         const user = jwt.verify(token, process.env.SECRET);
 
-        if (!user.id) { res.status(404).send({ message: 'invalid token' }); }
+        if (!user.id) { res.status(404).send({ message: 'invalid token' }); return false; }
 
-        User.findOne({ _id: user.id }, (err, user) => {
-            if (err) {
-                const errors = [];
+        User.findOne({ _id: req.params.uid })
+            .select('-password -__v')
+            .then((user) => {
+                if (!user) { res.status(404).send({ message: "User not found" }); return false; }
 
-                for (const key in err.errors) {
-                    if (err.errors.hasOwnProperty(key)) {
-                        errors.push(err.errors[key].message);
+                res.status(200).send(user);
+            }).catch((err) => {
+                if (err) {
+                    const errors = [];
+                    let errorString = "";
+
+                    for (const key in err.errors) {
+                        if (err.errors.hasOwnProperty(key)) {
+                            errors.push(err.errors[key].message);
+                            errorString += err.errors[key].message + '\n';
+                        }
                     }
+
+                    if(errorString == '') errorString = "Error Encountered!";
+                    res.status(422).json({ message: errorString }); return false;
                 }
-
-                res.status(422).json({ errors }); return false;
-            }
-
-            if (!user) { res.status(404).send({ message: "User not found" }); return false; }
-
-            res.status(200).send(user);
-        });
+            });
     } catch (e) {
-        res.status(404).send({ error: e.message });
+        res.status(404).send({ message: e.message });
     }
 }
